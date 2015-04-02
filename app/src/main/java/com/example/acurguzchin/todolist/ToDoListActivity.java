@@ -2,6 +2,7 @@ package com.example.acurguzchin.todolist;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 
@@ -31,6 +32,10 @@ public class ToDoListActivity extends Activity implements NewItemFragment.OnNewI
         todoItems = new ArrayList<>();
         aa = new ToDoItemAdapter(this, R.layout.todolist_item, todoItems);
         toDoListFragment.setListAdapter(aa);
+
+        Intent intent = getIntent();
+        onNewItemAdded(intent.getAction());
+        onNewItemAdded(intent.getDataString());
     }
 
     @Override
