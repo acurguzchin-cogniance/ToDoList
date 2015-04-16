@@ -2,7 +2,13 @@ package com.example.acurguzchin.todolist;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.app.LoaderManager;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.Loader;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 
@@ -16,7 +22,7 @@ import java.util.ArrayList;
 /**
  * Created by acurguzchin on 30.03.15.
  */
-public class ToDoListActivity extends Activity implements NewItemFragment.OnNewItemAddedListener {
+public class ToDoListActivity extends Activity implements NewItemFragment.OnNewItemAddedListener, LoaderManager.LoaderCallbacks<Cursor> {
     private ArrayList<ToDoItem> todoItems;
     private ToDoItemAdapter aa;
 
@@ -33,14 +39,43 @@ public class ToDoListActivity extends Activity implements NewItemFragment.OnNewI
         aa = new ToDoItemAdapter(this, R.layout.todolist_item, todoItems);
         toDoListFragment.setListAdapter(aa);
 
-        Intent intent = getIntent();
-        onNewItemAdded(intent.getAction());
-        onNewItemAdded(intent.getDataString());
+        getLoaderManager().initLoader(0, null, this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getLoaderManager().restartLoader(0, null, this);
     }
 
     @Override
     public void onNewItemAdded(String task) {
-        todoItems.add(0, new ToDoItem(task));
+        ContentResolver contentResolver = getContentResolver();
+        ContentValues values = new ContentValues();
+        values.put(ToDoContentProvider.KEY_TASK, task);
+        contentResolver.insert(ToDoContentProvider.CONTENT_URI, values);
+
+        getLoaderManager().restartLoader(0, null, this);
+    }
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        return new CursorLoader(this, ToDoContentProvider.CONTENT_URI, null, null, null, null);
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+        int keyTaskIndex = cursor.getColumnIndex(ToDoContentProvider.KEY_TASK);
+        todoItems.clear();
+        while (cursor.moveToNext()) {
+            ToDoItem todoItem = new ToDoItem(cursor.getString(keyTaskIndex));
+            todoItems.add(todoItem);
+        }
         aa.notifyDataSetChanged();
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+
     }
 }

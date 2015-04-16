@@ -16,5 +16,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <provider
+            android:authorities="com.example.acurguzchin.todolist"
+            android:name=".ToDoContentProvider" />
     </application>
 </manifest>
