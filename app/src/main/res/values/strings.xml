@@ -3,4 +3,5 @@
     <string name="addItemHint">New To Do Item</string>
     <string name="addItemContentDescription">New To Do Item</string>
     <string name="search_hint">Search a todo task</string>
+    <string name="search_description">ToDo items</string>
 </resources>

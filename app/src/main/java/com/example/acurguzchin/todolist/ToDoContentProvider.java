@@ -1,5 +1,6 @@
 package com.example.acurguzchin.todolist;
 
+import android.app.SearchManager;
 import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -11,6 +12,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.text.TextUtils;
+
+import java.util.HashMap;
 
 /**
  * Created by acurguzchin on 15.04.15.
@@ -26,12 +29,27 @@ public class ToDoContentProvider extends ContentProvider {
 
     private final static int ALL_ROWS = 1;
     private final static int SINGLE_ROW = 2;
+    private final static int SEARCH = 3;
 
     private static final UriMatcher uriMatcher;
     static {
         uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
         uriMatcher.addURI("com.example.acurguzchin.todolist", "todoitems", ALL_ROWS);
         uriMatcher.addURI("com.example.acurguzchin.todolist", "todoitems/#", SINGLE_ROW);
+
+        uriMatcher.addURI("com.example.acurguzchin.todolist", SearchManager.SUGGEST_URI_PATH_QUERY, SEARCH);
+        uriMatcher.addURI("com.example.acurguzchin.todolist", SearchManager.SUGGEST_URI_PATH_QUERY + "/*", SEARCH);
+        uriMatcher.addURI("com.example.acurguzchin.todolist", SearchManager.SUGGEST_URI_PATH_SHORTCUT, SEARCH);
+        uriMatcher.addURI("com.example.acurguzchin.todolist", SearchManager.SUGGEST_URI_PATH_SHORTCUT + "/*", SEARCH);
+    }
+
+    public static final String KEY_SEARCH_COLUMN = KEY_TASK;
+    private static final HashMap<String, String> SEARCH_SUGGEST_PROJECTION_MAP;
+    static {
+        SEARCH_SUGGEST_PROJECTION_MAP = new HashMap<>();
+        SEARCH_SUGGEST_PROJECTION_MAP.put("_id", KEY_ID + " AS " + "_id");
+        SEARCH_SUGGEST_PROJECTION_MAP.put(SearchManager.SUGGEST_COLUMN_TEXT_1, KEY_SEARCH_COLUMN + " AS " + SearchManager.SUGGEST_COLUMN_TEXT_1);
+        SEARCH_SUGGEST_PROJECTION_MAP.put(SearchManager.SUGGEST_COLUMN_INTENT_DATA_ID, KEY_ID + " AS " + "_id");
     }
 
     @Override
@@ -58,6 +76,12 @@ public class ToDoContentProvider extends ContentProvider {
             case SINGLE_ROW:
                 String rowId = uri.getPathSegments().get(1);
                 queryBuilder.appendWhere(KEY_ID + "=" + rowId);
+                break;
+            case SEARCH:
+                String query = uri.getPathSegments().get(1);
+                queryBuilder.appendWhere(KEY_SEARCH_COLUMN + " LIKE \"%" + query + "%\"");
+                queryBuilder.setProjectionMap(SEARCH_SUGGEST_PROJECTION_MAP);
+                break;
              default: break;
         }
 
@@ -68,14 +92,15 @@ public class ToDoContentProvider extends ContentProvider {
 
     @Override
     public String getType(Uri uri) {
-        if (uriMatcher.match(uri) == ALL_ROWS) {
-            return "vnd.android.cursor.dir/vnd.example.todos";
-        }
-        else if (uriMatcher.match(uri) == SINGLE_ROW) {
-            return "vnd.android.cursor.item/vnd.example.todos";
-        }
-        else {
-            throw new IllegalArgumentException("Unsupported URI " + uri);
+        switch (uriMatcher.match(uri)) {
+            case ALL_ROWS:
+                return "vnd.android.cursor.dir/vnd.example.todos";
+            case SINGLE_ROW:
+                return "vnd.android.cursor.item/vnd.example.todos";
+            case SEARCH:
+                return SearchManager.SUGGEST_MIME_TYPE;
+            default:
+                throw new IllegalArgumentException("Unsupported URI " + uri);
         }
     }
 
