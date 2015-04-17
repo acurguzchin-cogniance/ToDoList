@@ -2,4 +2,5 @@
     <string name="app_name">ToDoList</string>
     <string name="addItemHint">New To Do Item</string>
     <string name="addItemContentDescription">New To Do Item</string>
+    <string name="search_hint">Search a todo task</string>
 </resources>
